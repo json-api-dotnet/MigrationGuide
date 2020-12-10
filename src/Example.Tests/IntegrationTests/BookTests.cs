@@ -1,7 +1,9 @@
 using System.Threading.Tasks;
 using Example.Api;
 using FluentAssertions;
+using JsonApiDotNetCore.Serialization.Objects;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Newtonsoft.Json;
 using Xunit;
 
 namespace Example.Tests.IntegrationTests
@@ -25,8 +27,17 @@ namespace Example.Tests.IntegrationTests
             var responseBody = await response.Content.ReadAsStringAsync();
 
             responseBody.Should().Be(@"{
+  ""meta"": {
+    ""total-resources"": 1
+  },
+  ""links"": {
+    ""first"": ""/api/books"",
+    ""last"": ""/api/books""
+  },
   ""data"": [
     {
+      ""type"": ""books"",
+      ""id"": ""1"",
       ""attributes"": {
         ""title"": ""Gulliver's Travels"",
         ""synopsis"": ""This book is about...""
@@ -38,17 +49,9 @@ namespace Example.Tests.IntegrationTests
             ""related"": ""/api/books/1/author""
           }
         }
-      },
-      ""type"": ""books"",
-      ""id"": ""1""
+      }
     }
-  ],
-  ""links"": {
-    ""last"": ""/api/books?page[size]=10&page[number]=1""
-  },
-  ""meta"": {
-    ""total-records"": 1
-  }
+  ]
 }");
         }
 
@@ -64,8 +67,17 @@ namespace Example.Tests.IntegrationTests
             var responseBody = await response.Content.ReadAsStringAsync();
 
             responseBody.Should().Be(@"{
+  ""meta"": {
+    ""total-resources"": 1
+  },
+  ""links"": {
+    ""first"": ""/api/books?filter[title]=like:Gulliver"",
+    ""last"": ""/api/books?filter[title]=like:Gulliver""
+  },
   ""data"": [
     {
+      ""type"": ""books"",
+      ""id"": ""1"",
       ""attributes"": {
         ""title"": ""Gulliver's Travels"",
         ""synopsis"": ""This book is about...""
@@ -77,17 +89,9 @@ namespace Example.Tests.IntegrationTests
             ""related"": ""/api/books/1/author""
           }
         }
-      },
-      ""type"": ""books"",
-      ""id"": ""1""
+      }
     }
-  ],
-  ""links"": {
-    ""last"": ""/api/books?page[size]=10&page[number]=1&filter[title]=like:Gulliver""
-  },
-  ""meta"": {
-    ""total-records"": 1
-  }
+  ]
 }");
         }
 
@@ -95,7 +99,7 @@ namespace Example.Tests.IntegrationTests
         public async Task Can_filter_books_by_custom_query()
         {
             // Act
-            var response = await ExecuteGetRequestAsync("/api/books?filter[hide]=all");
+            var response = await ExecuteGetRequestAsync("/api/books?hide=all");
 
             // Assert
             response.EnsureSuccessStatus();
@@ -103,10 +107,10 @@ namespace Example.Tests.IntegrationTests
             var responseBody = await response.Content.ReadAsStringAsync();
 
             responseBody.Should().Be(@"{
-  ""data"": [],
   ""meta"": {
-    ""total-records"": 0
-  }
+    ""total-resources"": 0
+  },
+  ""data"": []
 }");
         }
 
@@ -123,6 +127,8 @@ namespace Example.Tests.IntegrationTests
 
             responseBody.Should().Be(@"{
   ""data"": {
+    ""type"": ""books"",
+    ""id"": ""1"",
     ""attributes"": {
       ""title"": ""Gulliver's Travels"",
       ""synopsis"": ""This book is about...""
@@ -134,9 +140,7 @@ namespace Example.Tests.IntegrationTests
           ""related"": ""/api/books/1/author""
         }
       }
-    },
-    ""type"": ""books"",
-    ""id"": ""1""
+    }
   }
 }");
         }
@@ -154,6 +158,8 @@ namespace Example.Tests.IntegrationTests
 
             responseBody.Should().Be(@"{
   ""data"": {
+    ""type"": ""people"",
+    ""id"": ""1"",
     ""attributes"": {
       ""first-name"": ""John"",
       ""last-name"": ""Doe"",
@@ -164,17 +170,9 @@ namespace Example.Tests.IntegrationTests
         ""links"": {
           ""self"": ""/api/people/1/relationships/books"",
           ""related"": ""/api/people/1/books""
-        },
-        ""data"": [
-          {
-            ""type"": ""books"",
-            ""id"": ""1""
-          }
-        ]
+        }
       }
-    },
-    ""type"": ""people"",
-    ""id"": ""1""
+    }
   }
 }");
         }
@@ -211,6 +209,8 @@ namespace Example.Tests.IntegrationTests
 
             responseBody.Should().Be(@"{
   ""data"": {
+    ""type"": ""books"",
+    ""id"": ""1"",
     ""attributes"": {
       ""title"": ""Gulliver's Travels"",
       ""synopsis"": ""This book is about...""
@@ -226,12 +226,12 @@ namespace Example.Tests.IntegrationTests
           ""id"": ""1""
         }
       }
-    },
-    ""type"": ""books"",
-    ""id"": ""1""
+    }
   },
   ""included"": [
     {
+      ""type"": ""people"",
+      ""id"": ""1"",
       ""attributes"": {
         ""first-name"": ""John"",
         ""last-name"": ""Doe"",
@@ -242,17 +242,9 @@ namespace Example.Tests.IntegrationTests
           ""links"": {
             ""self"": ""/api/people/1/relationships/books"",
             ""related"": ""/api/people/1/books""
-          },
-          ""data"": [
-            {
-              ""type"": ""books"",
-              ""id"": ""1""
-            }
-          ]
+          }
         }
-      },
-      ""type"": ""people"",
-      ""id"": ""1""
+      }
     }
   ]
 }");
@@ -262,7 +254,7 @@ namespace Example.Tests.IntegrationTests
         public async Task Can_get_book_including_author_last_name()
         {
             // Act
-            var response = await ExecuteGetRequestAsync("/api/books/1?include=author&fields[author]=last-name");
+            var response = await ExecuteGetRequestAsync("/api/books/1?include=author&fields[people]=last-name");
 
             // Assert
             response.EnsureSuccessStatus();
@@ -271,7 +263,12 @@ namespace Example.Tests.IntegrationTests
 
             responseBody.Should().Be(@"{
   ""data"": {
-    ""attributes"": {},
+    ""type"": ""books"",
+    ""id"": ""1"",
+    ""attributes"": {
+      ""title"": ""Gulliver's Travels"",
+      ""synopsis"": ""This book is about...""
+    },
     ""relationships"": {
       ""author"": {
         ""links"": {
@@ -283,25 +280,15 @@ namespace Example.Tests.IntegrationTests
           ""id"": ""1""
         }
       }
-    },
-    ""type"": ""books"",
-    ""id"": ""1""
+    }
   },
   ""included"": [
     {
+      ""type"": ""people"",
+      ""id"": ""1"",
       ""attributes"": {
         ""last-name"": ""Doe""
-      },
-      ""relationships"": {
-        ""books"": {
-          ""links"": {
-            ""self"": ""/api/people/1/relationships/books"",
-            ""related"": ""/api/people/1/books""
-          }
-        }
-      },
-      ""type"": ""people"",
-      ""id"": ""1""
+      }
     }
   ]
 }");
@@ -320,19 +307,11 @@ namespace Example.Tests.IntegrationTests
 
             responseBody.Should().Be(@"{
   ""data"": {
+    ""type"": ""books"",
+    ""id"": ""1"",
     ""attributes"": {
       ""title"": ""Gulliver's Travels""
-    },
-    ""relationships"": {
-      ""author"": {
-        ""links"": {
-          ""self"": ""/api/books/1/relationships/author"",
-          ""related"": ""/api/books/1/author""
-        }
-      }
-    },
-    ""type"": ""books"",
-    ""id"": ""1""
+    }
   }
 }");
         }
@@ -348,7 +327,19 @@ namespace Example.Tests.IntegrationTests
 
             var responseBody = await response.Content.ReadAsStringAsync();
 
-            responseBody.Should().Be("");
+            var responseDocument = JsonConvert.DeserializeObject<ErrorDocument>(responseBody);
+            var errorId = responseDocument.Errors[0].Id;
+
+            responseBody.Should().Be(@"{
+  ""errors"": [
+    {
+      ""id"": """ + errorId + @""",
+      ""status"": ""404"",
+      ""title"": ""The requested resource does not exist."",
+      ""detail"": ""Resource of type 'books' with ID '99999999' does not exist.""
+    }
+  ]
+}");
         }
     }
 }

@@ -1,28 +1,31 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Example.Api.Resources;
-using JsonApiDotNetCore.Data;
-using JsonApiDotNetCore.Models;
-using JsonApiDotNetCore.Services;
+using JsonApiDotNetCore.Configuration;
+using JsonApiDotNetCore.Queries;
+using JsonApiDotNetCore.Repositories;
+using JsonApiDotNetCore.Resources;
 using Microsoft.Extensions.Logging;
 
 namespace Example.Api.Repositories
 {
-    public class PersonRepository : DefaultEntityRepository<Person>
+    public class PersonRepository : EntityFrameworkCoreRepository<Person>
     {
         private readonly ILogger<PersonRepository> _logger;
 
-        public PersonRepository(ILoggerFactory loggerFactory, IJsonApiContext jsonApiContext,
-            IDbContextResolver contextResolver, ResourceDefinition<Person> resourceDefinition = null)
-            : base(loggerFactory, jsonApiContext, contextResolver, resourceDefinition)
+        public PersonRepository(ITargetedFields targetedFields, IDbContextResolver contextResolver,
+            IResourceGraph resourceGraph, IResourceFactory resourceFactory,
+            IEnumerable<IQueryConstraintProvider> constraintProviders, ILoggerFactory loggerFactory)
+            : base(targetedFields, contextResolver, resourceGraph, resourceFactory, constraintProviders, loggerFactory)
         {
             _logger = loggerFactory.CreateLogger<PersonRepository>();
         }
 
-        public override IQueryable<Person> Get()
+        protected override IQueryable<Person> GetAll()
         {
-            _logger.LogDebug("Entering PersonRepository.Get");
+            _logger.LogDebug("Entering PersonRepository.GetAll");
 
-            return base.Get();
+            return base.GetAll();
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using JsonApiDotNetCore.Models;
+using JsonApiDotNetCore.Resources;
+using JsonApiDotNetCore.Resources.Annotations;
 
 namespace Example.Api.Resources
 {
@@ -9,7 +10,7 @@ namespace Example.Api.Resources
         [Required]
         public string Title { get; set; }
 
-        [Attr("synopsis", isImmutable: true, isSortable: false)]
+        [Attr(PublicName = "synopsis", Capabilities = AttrCapabilities.AllowView | AttrCapabilities.AllowFilter)]
         [MinLength(3)]
         public string Summary { get; set; }
 

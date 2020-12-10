@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using JsonApiDotNetCore.Models;
+using JsonApiDotNetCore.Resources;
+using JsonApiDotNetCore.Resources.Annotations;
 
 namespace Example.Api.Resources
 {
@@ -14,7 +15,7 @@ namespace Example.Api.Resources
         [Required]
         public string LastName { get; set; }
 
-        [Attr(isFilterable: false)]
+        [Attr(Capabilities = ~AttrCapabilities.AllowFilter)]
         public DateTimeOffset BornAt { get; set; }
 
         [HasMany]

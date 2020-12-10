@@ -4,15 +4,16 @@ using Example.Api.Definitions;
 using Example.Api.Repositories;
 using Example.Api.Resources;
 using Example.Api.Services;
-using JsonApiDotNetCore.Data;
-using JsonApiDotNetCore.Extensions;
-using JsonApiDotNetCore.Models;
-using JsonApiDotNetCore.Services;
+using JsonApiDotNetCore.Configuration;
+using JsonApiDotNetCore.Resources;
+using JsonApiDotNetCore.Resources.Annotations;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace Example.Api
 {
@@ -31,29 +32,39 @@ namespace Example.Api
 
             services.AddJsonApi<AppDbContext>(options =>
             {
-                options.IncludeTotalRecordCount = true;
+                options.IncludeTotalResourceCount = true;
                 options.Namespace = "api";
-                options.RelativeLinks = true;
+                options.UseRelativeLinks = true;
                 options.SerializerSettings.Formatting = Formatting.Indented;
-                options.DefaultPageSize = 10;
+                options.DefaultPageSize = new PageSize(10);
+                options.EnableLegacyFilterNotation = true;
+                options.TopLevelLinks = LinkTypes.Paging;
+                options.ResourceLinks = LinkTypes.None;
+
+                options.SerializerSettings.ContractResolver = new DefaultContractResolver
+                {
+                    NamingStrategy = new KebabCaseNamingStrategy()
+                };
             });
 
-            services.AddScoped<IEntityRepository<Person>, PersonRepository>();
-            services.AddScoped<IResourceService<Book>, BookService>();
-            services.AddScoped<ResourceDefinition<Book>, BookDefinition>();
+            services.AddResourceRepository<PersonRepository>();
+            services.AddResourceService<BookService>();
+            services.AddScoped<IResourceDefinition<Book>, BookDefinition>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, AppDbContext appDbContext)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment environment, AppDbContext appDbContext)
         {
             SeedSampleData(appDbContext);
 
-            if (env.IsDevelopment())
+            if (environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseRouting();
             app.UseJsonApi();
+            app.UseEndpoints(endpoints => endpoints.MapControllers());
         }
 
         private static void SeedSampleData(AppDbContext appDbContext)

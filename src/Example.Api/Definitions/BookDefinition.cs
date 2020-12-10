@@ -1,32 +1,38 @@
-﻿using System.Collections.Generic;
+﻿using System.ComponentModel;
 using System.Linq;
 using Example.Api.Resources;
-using JsonApiDotNetCore.Internal;
-using JsonApiDotNetCore.Internal.Query;
-using JsonApiDotNetCore.Models;
+using JsonApiDotNetCore.Configuration;
+using JsonApiDotNetCore.Queries.Expressions;
+using JsonApiDotNetCore.Resources;
 
 namespace Example.Api.Definitions
 {
-    public class BookDefinition : ResourceDefinition<Book>
+    public class BookDefinition : JsonApiResourceDefinition<Book>
     {
         private readonly IResourceGraph _resourceGraph;
 
         public BookDefinition(IResourceGraph resourceGraph)
+            : base(resourceGraph)
         {
             _resourceGraph = resourceGraph;
         }
 
-        protected override PropertySortOrder GetDefaultSortOrder()
+        public override SortExpression OnApplySort(SortExpression existingSort)
         {
-            return new PropertySortOrder
+            if (existingSort != null)
             {
-                (book => book.Id, SortDirection.Ascending)
-            };
+                return existingSort;
+            }
+
+            return CreateSortExpressionFromLambda(new PropertySortOrder
+            {
+                (book => book.Id, ListSortDirection.Ascending)
+            });
         }
 
-        public override QueryFilters GetQueryFilters()
+        public override QueryStringParameterHandlers<Book> OnRegisterQueryableHandlersForQueryStringParameters()
         {
-            return new QueryFilters
+            return new QueryStringParameterHandlers<Book>
             {
                 {"hide", (bookQuery, parameterValue) => GetBooksFilter(bookQuery, parameterValue)}
             };
@@ -37,15 +43,21 @@ namespace Example.Api.Definitions
             return parameterValue == "all" ? bookQuery.Where(_ => false) : bookQuery;
         }
 
-        protected override List<AttrAttribute> OutputAttrs(Book instance)
+        public override SparseFieldSetExpression OnApplySparseFieldSet(SparseFieldSetExpression existingSparseFieldSet)
         {
-            var contextEntity = _resourceGraph.GetContextEntity(typeof(Book));
+            if (existingSparseFieldSet != null)
+            {
+                var visibleFields = existingSparseFieldSet.Fields
+                    .Where(field => !field.Property.Name.StartsWith("Hidden"))
+                    .ToList();
 
-            var visibleAttributes = contextEntity.Attributes
-                .Where(attr => !attr.InternalAttributeName.StartsWith("Hidden"))
-                .ToList();
+                if (visibleFields.Any())
+                {
+                    return new SparseFieldSetExpression(visibleFields);
+                }
+            }
 
-            return visibleAttributes;
+            return null;
         }
     }
 }
