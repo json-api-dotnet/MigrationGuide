@@ -39,7 +39,7 @@ The table below lists which interfaces to inject, in order to obtain the same in
 | `QuerySet`| `IEnumerable<IQueryConstraintProvider>`|
 | `PageManager` | `IPaginationContext` |
 | `AttributesToUpdate`, `RelationshipsToUpdate` | `ITargetedFields` |
-| `HasOneRelationshipPointers`, `HasManyRelationshipPointers` | `RelationshipAttribute.GetValue()` |
+| `HasOneRelationshipPointers`, `HasManyRelationshipPointers` | `ITargetedFields.Relationships[].GetValue()` |
 | `BasePath` | `IJsonApiRequest.BasePath` |
 | `RequestEntity` | `IJsonApiRequest.(SecondaryResource ?? PrimaryResource)` |
 | `DocumentMeta` | `IResponseMeta` |
