@@ -6,9 +6,25 @@ The [release notes](https://github.com/json-api-dotnet/JsonApiDotNetCore/release
 But to see the effects, this repository contains an example ASP.NET API project.
 By comparing the changes between branches in this repo, you can see how this example project was changed to work with the next major version.
 
+### Upgrade from v4 to v5
+
+The diff for the upgrade of example project [from v4.0.0 to v5.0.0](https://github.com/json-api-dotnet/MigrationGuide/compare/release/4.0.0...release/5.0.0) shows how to convert with minimal change in behavior. It includes tests that assert on the response json.
+
+This upgrade should be straightforward in most cases. Notable renames:
+
+| JsonApiDotNetCore v4  | JsonApiDotNetCore v5 |
+| --- | --- |
+| `IResourceContextProvider` | `IResourceGraph` |
+| `ResourceContext` | `ResourceType` |
+| `RelationshipAttribute.Left/RightType` | `RelationshipAttribute.Left/RightType.ClrType` |
+| `ErrorDocument` | `Document` |
+| `AtomicOperationsDocument` | `Document` |
+| `Error` | `ErrorObject` |
+
+
 ### Upgrade from v3 to v4
 
-The diff for upgrade of example project [from v3.1.0 to v4.0.0](https://github.com/json-api-dotnet/MigrationGuide/compare/release/3.1.0...release/4.0.0) shows how to convert with minimal change in behavior. It includes tests that assert on the response json.
+The diff for the upgrade of example project [from v3.1.0 to v4.0.0](https://github.com/json-api-dotnet/MigrationGuide/compare/release/3.1.0...release/4.0.0) shows how to convert with minimal change in behavior. It includes tests that assert on the response json.
 
 Since v3, a lot of the internal workings have been optimized. Depending on how much custom code you wrote, the next table of renames may help to find back what you need.
 
