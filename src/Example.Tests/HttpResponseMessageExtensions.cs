@@ -1,19 +1,15 @@
-using System;
-using System.Net.Http;
+namespace Example.Tests;
 
-namespace Example.Tests
+public static class HttpResponseMessageExtensions
 {
-    public static class HttpResponseMessageExtensions
+    public static void EnsureSuccessStatus(this HttpResponseMessage httpResponseMessage)
     {
-        public static void EnsureSuccessStatus(this HttpResponseMessage httpResponseMessage)
+        if (!httpResponseMessage.IsSuccessStatusCode)
         {
-            if (!httpResponseMessage.IsSuccessStatusCode)
-            {
-                var body = httpResponseMessage.Content.ReadAsStringAsync().Result;
-                var message = $"Failed with status '{(int) httpResponseMessage.StatusCode}' and body:\n<<{body}>>";
+            string body = httpResponseMessage.Content.ReadAsStringAsync().Result;
+            string message = $"Failed with status '{(int)httpResponseMessage.StatusCode}' and body:\n<<{body}>>";
 
-                throw new Exception(message);
-            }
+            throw new Exception(message);
         }
     }
 }

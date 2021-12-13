@@ -1,24 +1,21 @@
-using System.Net.Http;
-using System.Threading.Tasks;
-using Example.Api;
+using Example.Api.Data;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
-namespace Example.Tests
+namespace Example.Tests;
+
+public abstract class ExampleTestFixture : IClassFixture<WebApplicationFactory<AppDbContext>>
 {
-    public abstract class ExampleTestFixture : IClassFixture<WebApplicationFactory<Startup>>
+    private readonly WebApplicationFactory<AppDbContext> _factory;
+
+    protected ExampleTestFixture(WebApplicationFactory<AppDbContext> factory)
     {
-        private readonly WebApplicationFactory<Startup> _factory;
+        _factory = factory;
+    }
 
-        protected ExampleTestFixture(WebApplicationFactory<Startup> factory)
-        {
-            _factory = factory;
-        }
-
-        protected async Task<HttpResponseMessage> ExecuteGetRequestAsync(string route)
-        {
-            var client = _factory.CreateClient();
-            return await client.GetAsync(route);
-        }
+    protected async Task<HttpResponseMessage> ExecuteGetRequestAsync(string route)
+    {
+        HttpClient client = _factory.CreateClient();
+        return await client.GetAsync(route);
     }
 }

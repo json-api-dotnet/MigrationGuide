@@ -1,16 +1,15 @@
 ﻿using Example.Api.Resources;
 using Microsoft.EntityFrameworkCore;
 
-namespace Example.Api.Data
-{
-    public class AppDbContext : DbContext
-    {
-        public DbSet<Person> People { get; set; }
-        public DbSet<Book> Books { get; set; }
+namespace Example.Api.Data;
 
-        public AppDbContext(DbContextOptions<AppDbContext> options)
-            : base(options)
-        {
-        }
+public class AppDbContext : DbContext
+{
+    public DbSet<Person> People => Set<Person>();
+    public DbSet<Book> Books => Set<Book>();
+
+    public AppDbContext(DbContextOptions<AppDbContext> options)
+        : base(options)
+    {
     }
 }

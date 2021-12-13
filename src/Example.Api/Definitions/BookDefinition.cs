@@ -1,63 +1,60 @@
-﻿using System.ComponentModel;
-using System.Linq;
+﻿using System.Collections.Immutable;
+using System.ComponentModel;
 using Example.Api.Resources;
 using JsonApiDotNetCore.Configuration;
 using JsonApiDotNetCore.Queries.Expressions;
 using JsonApiDotNetCore.Resources;
+using JsonApiDotNetCore.Resources.Annotations;
 
-namespace Example.Api.Definitions
+namespace Example.Api.Definitions;
+
+public sealed class BookDefinition : JsonApiResourceDefinition<Book, int>
 {
-    public class BookDefinition : JsonApiResourceDefinition<Book>
+    public BookDefinition(IResourceGraph resourceGraph)
+        : base(resourceGraph)
     {
-        private readonly IResourceGraph _resourceGraph;
+    }
 
-        public BookDefinition(IResourceGraph resourceGraph)
-            : base(resourceGraph)
+    public override SortExpression OnApplySort(SortExpression? existingSort)
+    {
+        if (existingSort != null)
         {
-            _resourceGraph = resourceGraph;
+            return existingSort;
         }
 
-        public override SortExpression OnApplySort(SortExpression existingSort)
+        return CreateSortExpressionFromLambda(new PropertySortOrder
         {
-            if (existingSort != null)
+            (book => book.Id, ListSortDirection.Ascending)
+        });
+    }
+
+    public override QueryStringParameterHandlers<Book> OnRegisterQueryableHandlersForQueryStringParameters()
+    {
+        return new QueryStringParameterHandlers<Book>
+        {
+            { "hide", (bookQuery, parameterValue) => GetBooksFilter(bookQuery, parameterValue) }
+        };
+    }
+
+    private IQueryable<Book> GetBooksFilter(IQueryable<Book> bookQuery, string parameterValue)
+    {
+        return parameterValue == "all" ? bookQuery.Where(_ => false) : bookQuery;
+    }
+
+    public override SparseFieldSetExpression? OnApplySparseFieldSet(SparseFieldSetExpression? existingSparseFieldSet)
+    {
+        if (existingSparseFieldSet != null)
+        {
+            ImmutableHashSet<ResourceFieldAttribute> visibleFields = existingSparseFieldSet.Fields
+                .Where(field => !field.Property.Name.StartsWith("Hidden", StringComparison.Ordinal))
+                .ToImmutableHashSet();
+
+            if (visibleFields.Any())
             {
-                return existingSort;
+                return new SparseFieldSetExpression(visibleFields);
             }
-
-            return CreateSortExpressionFromLambda(new PropertySortOrder
-            {
-                (book => book.Id, ListSortDirection.Ascending)
-            });
         }
 
-        public override QueryStringParameterHandlers<Book> OnRegisterQueryableHandlersForQueryStringParameters()
-        {
-            return new QueryStringParameterHandlers<Book>
-            {
-                {"hide", (bookQuery, parameterValue) => GetBooksFilter(bookQuery, parameterValue)}
-            };
-        }
-
-        private IQueryable<Book> GetBooksFilter(IQueryable<Book> bookQuery, string parameterValue)
-        {
-            return parameterValue == "all" ? bookQuery.Where(_ => false) : bookQuery;
-        }
-
-        public override SparseFieldSetExpression OnApplySparseFieldSet(SparseFieldSetExpression existingSparseFieldSet)
-        {
-            if (existingSparseFieldSet != null)
-            {
-                var visibleFields = existingSparseFieldSet.Fields
-                    .Where(field => !field.Property.Name.StartsWith("Hidden"))
-                    .ToList();
-
-                if (visibleFields.Any())
-                {
-                    return new SparseFieldSetExpression(visibleFields);
-                }
-            }
-
-            return null;
-        }
+        return null;
     }
 }

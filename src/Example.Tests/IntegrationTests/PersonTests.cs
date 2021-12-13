@@ -1,35 +1,32 @@
-using System.Threading.Tasks;
-using Example.Api;
+using System.Net;
+using Example.Api.Data;
 using FluentAssertions;
 using JsonApiDotNetCore.Serialization.Objects;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Newtonsoft.Json;
 using Xunit;
 
-namespace Example.Tests.IntegrationTests
+namespace Example.Tests.IntegrationTests;
+
+public sealed class PersonTests : ExampleTestFixture
 {
-    public class PersonTests : ExampleTestFixture
+    public PersonTests(WebApplicationFactory<AppDbContext> factory)
+        : base(factory)
     {
-        public PersonTests(WebApplicationFactory<Startup> factory)
-            : base(factory)
-        {
-        }
+    }
 
-        [Fact]
-        public async Task Can_get_people()
-        {
-            // Act
-            var response = await ExecuteGetRequestAsync("/api/people");
+    [Fact]
+    public async Task Can_get_people()
+    {
+        // Act
+        HttpResponseMessage response = await ExecuteGetRequestAsync("/api/people");
 
-            // Assert
-            response.EnsureSuccessStatus();
+        // Assert
+        response.EnsureSuccessStatus();
 
-            var responseBody = await response.Content.ReadAsStringAsync();
+        string responseBody = await response.Content.ReadAsStringAsync();
 
-            responseBody.Should().Be(@"{
-  ""meta"": {
-    ""total-resources"": 1
-  },
+        responseBody.Should().Be(@"{
   ""links"": {
     ""first"": ""/api/people"",
     ""last"": ""/api/people""
@@ -41,7 +38,7 @@ namespace Example.Tests.IntegrationTests
       ""attributes"": {
         ""first-name"": ""John"",
         ""last-name"": ""Doe"",
-        ""born-at"": ""1993-03-28T23:00:00+02:00""
+        ""born-at"": ""1993-03-29T00:00:00+00:00""
       },
       ""relationships"": {
         ""books"": {
@@ -52,28 +49,28 @@ namespace Example.Tests.IntegrationTests
         }
       }
     }
-  ]
-}");
-        }
-
-        [Fact]
-        public async Task Can_filter_people_by_last_name()
-        {
-            // Act
-            var response = await ExecuteGetRequestAsync("/api/people?filter[last-name]=Doe");
-
-            // Assert
-            response.EnsureSuccessStatus();
-
-            var responseBody = await response.Content.ReadAsStringAsync();
-
-            responseBody.Should().Be(@"{
+  ],
   ""meta"": {
-    ""total-resources"": 1
-  },
+    ""total"": 1
+  }
+}");
+    }
+
+    [Fact]
+    public async Task Can_filter_people_by_last_name()
+    {
+        // Act
+        HttpResponseMessage response = await ExecuteGetRequestAsync("/api/people?filter[last-name]=Doe");
+
+        // Assert
+        response.EnsureSuccessStatus();
+
+        string responseBody = await response.Content.ReadAsStringAsync();
+
+        responseBody.Should().Be(@"{
   ""links"": {
-    ""first"": ""/api/people?filter[last-name]=Doe"",
-    ""last"": ""/api/people?filter[last-name]=Doe""
+    ""first"": ""/api/people?filter%5Blast-name%5D=Doe"",
+    ""last"": ""/api/people?filter%5Blast-name%5D=Doe""
   },
   ""data"": [
     {
@@ -82,7 +79,7 @@ namespace Example.Tests.IntegrationTests
       ""attributes"": {
         ""first-name"": ""John"",
         ""last-name"": ""Doe"",
-        ""born-at"": ""1993-03-28T23:00:00+02:00""
+        ""born-at"": ""1993-03-29T00:00:00+00:00""
       },
       ""relationships"": {
         ""books"": {
@@ -93,29 +90,32 @@ namespace Example.Tests.IntegrationTests
         }
       }
     }
-  ]
+  ],
+  ""meta"": {
+    ""total"": 1
+  }
 }");
-        }
+    }
 
-        [Fact]
-        public async Task Can_get_person_by_ID()
-        {
-            // Act
-            var response = await ExecuteGetRequestAsync("/api/people/1");
+    [Fact]
+    public async Task Can_get_person_by_ID()
+    {
+        // Act
+        HttpResponseMessage response = await ExecuteGetRequestAsync("/api/people/1");
 
-            // Assert
-            response.EnsureSuccessStatus();
+        // Assert
+        response.EnsureSuccessStatus();
 
-            var responseBody = await response.Content.ReadAsStringAsync();
+        string responseBody = await response.Content.ReadAsStringAsync();
 
-            responseBody.Should().Be(@"{
+        responseBody.Should().Be(@"{
   ""data"": {
     ""type"": ""people"",
     ""id"": ""1"",
     ""attributes"": {
       ""first-name"": ""John"",
       ""last-name"": ""Doe"",
-      ""born-at"": ""1993-03-28T23:00:00+02:00""
+      ""born-at"": ""1993-03-29T00:00:00+00:00""
     },
     ""relationships"": {
       ""books"": {
@@ -127,22 +127,23 @@ namespace Example.Tests.IntegrationTests
     }
   }
 }");
-        }
+    }
 
-        [Fact]
-        public async Task Can_get_person_books()
-        {
-            // Act
-            var response = await ExecuteGetRequestAsync("/api/people/1/books");
+    [Fact]
+    public async Task Can_get_person_books()
+    {
+        // Act
+        HttpResponseMessage response = await ExecuteGetRequestAsync("/api/people/1/books");
 
-            // Assert
-            response.EnsureSuccessStatus();
+        // Assert
+        response.EnsureSuccessStatus();
 
-            var responseBody = await response.Content.ReadAsStringAsync();
+        string responseBody = await response.Content.ReadAsStringAsync();
 
-            responseBody.Should().Be(@"{
+        responseBody.Should().Be(@"{
   ""links"": {
-    ""first"": ""/api/people/1/books""
+    ""first"": ""/api/people/1/books"",
+    ""last"": ""/api/people/1/books""
   },
   ""data"": [
     {
@@ -161,53 +162,60 @@ namespace Example.Tests.IntegrationTests
         }
       }
     }
-  ]
+  ],
+  ""meta"": {
+    ""total"": 1
+  }
 }");
-        }
+    }
 
-        [Fact]
-        public async Task Can_get_person_books_relationship()
-        {
-            // Act
-            var response = await ExecuteGetRequestAsync("/api/people/1/relationships/books");
+    [Fact]
+    public async Task Can_get_person_books_relationship()
+    {
+        // Act
+        HttpResponseMessage response = await ExecuteGetRequestAsync("/api/people/1/relationships/books");
 
-            // Assert
-            response.EnsureSuccessStatus();
+        // Assert
+        response.EnsureSuccessStatus();
 
-            var responseBody = await response.Content.ReadAsStringAsync();
+        string responseBody = await response.Content.ReadAsStringAsync();
 
-            responseBody.Should().Be(@"{
+        responseBody.Should().Be(@"{
   ""links"": {
-    ""first"": ""/api/people/1/relationships/books""
+    ""first"": ""/api/people/1/relationships/books"",
+    ""last"": ""/api/people/1/relationships/books""
   },
   ""data"": [
     {
       ""type"": ""books"",
       ""id"": ""1""
     }
-  ]
+  ],
+  ""meta"": {
+    ""total"": 1
+  }
 }");
-        }
+    }
 
-        [Fact]
-        public async Task Can_get_person_including_books()
-        {
-            // Act
-            var response = await ExecuteGetRequestAsync("/api/people/1?include=books");
+    [Fact]
+    public async Task Can_get_person_including_books()
+    {
+        // Act
+        HttpResponseMessage response = await ExecuteGetRequestAsync("/api/people/1?include=books");
 
-            // Assert
-            response.EnsureSuccessStatus();
+        // Assert
+        response.EnsureSuccessStatus();
 
-            var responseBody = await response.Content.ReadAsStringAsync();
+        string responseBody = await response.Content.ReadAsStringAsync();
 
-            responseBody.Should().Be(@"{
+        responseBody.Should().Be(@"{
   ""data"": {
     ""type"": ""people"",
     ""id"": ""1"",
     ""attributes"": {
       ""first-name"": ""John"",
       ""last-name"": ""Doe"",
-      ""born-at"": ""1993-03-28T23:00:00+02:00""
+      ""born-at"": ""1993-03-29T00:00:00+00:00""
     },
     ""relationships"": {
       ""books"": {
@@ -243,27 +251,27 @@ namespace Example.Tests.IntegrationTests
     }
   ]
 }");
-        }
+    }
 
-        [Fact]
-        public async Task Can_get_person_including_book_titles()
-        {
-            // Act
-            var response = await ExecuteGetRequestAsync("/api/people/1?include=books&fields[books]=title");
+    [Fact]
+    public async Task Can_get_person_including_book_titles()
+    {
+        // Act
+        HttpResponseMessage response = await ExecuteGetRequestAsync("/api/people/1?include=books&fields[books]=title");
 
-            // Assert
-            response.EnsureSuccessStatus();
+        // Assert
+        response.EnsureSuccessStatus();
 
-            var responseBody = await response.Content.ReadAsStringAsync();
+        string responseBody = await response.Content.ReadAsStringAsync();
 
-            responseBody.Should().Be(@"{
+        responseBody.Should().Be(@"{
   ""data"": {
     ""type"": ""people"",
     ""id"": ""1"",
     ""attributes"": {
       ""first-name"": ""John"",
       ""last-name"": ""Doe"",
-      ""born-at"": ""1993-03-28T23:00:00+02:00""
+      ""born-at"": ""1993-03-29T00:00:00+00:00""
     },
     ""relationships"": {
       ""books"": {
@@ -290,20 +298,20 @@ namespace Example.Tests.IntegrationTests
     }
   ]
 }");
-        }
+    }
 
-        [Fact]
-        public async Task Can_get_person_last_name()
-        {
-            // Act
-            var response = await ExecuteGetRequestAsync("/api/people/1?fields[people]=last-name");
+    [Fact]
+    public async Task Can_get_person_last_name()
+    {
+        // Act
+        HttpResponseMessage response = await ExecuteGetRequestAsync("/api/people/1?fields[people]=last-name");
 
-            // Assert
-            response.EnsureSuccessStatus();
+        // Assert
+        response.EnsureSuccessStatus();
 
-            var responseBody = await response.Content.ReadAsStringAsync();
+        string responseBody = await response.Content.ReadAsStringAsync();
 
-            responseBody.Should().Be(@"{
+        responseBody.Should().Be(@"{
   ""data"": {
     ""type"": ""people"",
     ""id"": ""1"",
@@ -312,23 +320,23 @@ namespace Example.Tests.IntegrationTests
     }
   }
 }");
-        }
+    }
 
-        [Fact]
-        public async Task Cannot_get_missing_person()
-        {
-            // Act
-            var response = await ExecuteGetRequestAsync("/api/people/99999999");
+    [Fact]
+    public async Task Cannot_get_missing_person()
+    {
+        // Act
+        HttpResponseMessage response = await ExecuteGetRequestAsync("/api/people/99999999");
 
-            // Assert
-            response.StatusCode.Should().Be(404);
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
 
-            var responseBody = await response.Content.ReadAsStringAsync();
+        string responseBody = await response.Content.ReadAsStringAsync();
 
-            var responseDocument = JsonConvert.DeserializeObject<ErrorDocument>(responseBody);
-            var errorId = responseDocument.Errors[0].Id;
+        var responseDocument = JsonConvert.DeserializeObject<Document>(responseBody);
+        string? errorId = responseDocument?.Errors?[0].Id;
 
-            responseBody.Should().Be(@"{
+        responseBody.Should().Be(@"{
   ""errors"": [
     {
       ""id"": """ + errorId + @""",
@@ -338,6 +346,5 @@ namespace Example.Tests.IntegrationTests
     }
   ]
 }");
-        }
     }
 }

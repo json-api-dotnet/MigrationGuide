@@ -1,35 +1,32 @@
-using System.Threading.Tasks;
-using Example.Api;
+using System.Net;
+using Example.Api.Data;
 using FluentAssertions;
 using JsonApiDotNetCore.Serialization.Objects;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Newtonsoft.Json;
 using Xunit;
 
-namespace Example.Tests.IntegrationTests
+namespace Example.Tests.IntegrationTests;
+
+public sealed class BookTests : ExampleTestFixture
 {
-    public class BookTests : ExampleTestFixture
+    public BookTests(WebApplicationFactory<AppDbContext> factory)
+        : base(factory)
     {
-        public BookTests(WebApplicationFactory<Startup> factory)
-            : base(factory)
-        {
-        }
+    }
 
-        [Fact]
-        public async Task Can_get_books()
-        {
-            // Act
-            var response = await ExecuteGetRequestAsync("/api/books");
+    [Fact]
+    public async Task Can_get_books()
+    {
+        // Act
+        HttpResponseMessage response = await ExecuteGetRequestAsync("/api/books");
 
-            // Assert
-            response.EnsureSuccessStatus();
+        // Assert
+        response.EnsureSuccessStatus();
 
-            var responseBody = await response.Content.ReadAsStringAsync();
+        string responseBody = await response.Content.ReadAsStringAsync();
 
-            responseBody.Should().Be(@"{
-  ""meta"": {
-    ""total-resources"": 1
-  },
+        responseBody.Should().Be(@"{
   ""links"": {
     ""first"": ""/api/books"",
     ""last"": ""/api/books""
@@ -51,28 +48,28 @@ namespace Example.Tests.IntegrationTests
         }
       }
     }
-  ]
-}");
-        }
-
-        [Fact]
-        public async Task Can_filter_books_by_title()
-        {
-            // Act
-            var response = await ExecuteGetRequestAsync("/api/books?filter[title]=like:Gulliver");
-
-            // Assert
-            response.EnsureSuccessStatus();
-
-            var responseBody = await response.Content.ReadAsStringAsync();
-
-            responseBody.Should().Be(@"{
+  ],
   ""meta"": {
-    ""total-resources"": 1
-  },
+    ""total"": 1
+  }
+}");
+    }
+
+    [Fact]
+    public async Task Can_filter_books_by_title()
+    {
+        // Act
+        HttpResponseMessage response = await ExecuteGetRequestAsync("/api/books?filter[title]=like:Gulliver");
+
+        // Assert
+        response.EnsureSuccessStatus();
+
+        string responseBody = await response.Content.ReadAsStringAsync();
+
+        responseBody.Should().Be(@"{
   ""links"": {
-    ""first"": ""/api/books?filter[title]=like:Gulliver"",
-    ""last"": ""/api/books?filter[title]=like:Gulliver""
+    ""first"": ""/api/books?filter%5Btitle%5D=like%3AGulliver"",
+    ""last"": ""/api/books?filter%5Btitle%5D=like%3AGulliver""
   },
   ""data"": [
     {
@@ -91,41 +88,44 @@ namespace Example.Tests.IntegrationTests
         }
       }
     }
-  ]
-}");
-        }
-
-        [Fact]
-        public async Task Can_filter_books_by_custom_query()
-        {
-            // Act
-            var response = await ExecuteGetRequestAsync("/api/books?hide=all");
-
-            // Assert
-            response.EnsureSuccessStatus();
-
-            var responseBody = await response.Content.ReadAsStringAsync();
-
-            responseBody.Should().Be(@"{
+  ],
   ""meta"": {
-    ""total-resources"": 0
-  },
-  ""data"": []
+    ""total"": 1
+  }
 }");
-        }
+    }
 
-        [Fact]
-        public async Task Can_get_book_by_ID()
-        {
-            // Act
-            var response = await ExecuteGetRequestAsync("/api/books/1");
+    [Fact]
+    public async Task Can_filter_books_by_custom_query()
+    {
+        // Act
+        HttpResponseMessage response = await ExecuteGetRequestAsync("/api/books?hide=all");
 
-            // Assert
-            response.EnsureSuccessStatus();
+        // Assert
+        response.EnsureSuccessStatus();
 
-            var responseBody = await response.Content.ReadAsStringAsync();
+        string responseBody = await response.Content.ReadAsStringAsync();
 
-            responseBody.Should().Be(@"{
+        responseBody.Should().Be(@"{
+  ""data"": [],
+  ""meta"": {
+    ""total"": 0
+  }
+}");
+    }
+
+    [Fact]
+    public async Task Can_get_book_by_ID()
+    {
+        // Act
+        HttpResponseMessage response = await ExecuteGetRequestAsync("/api/books/1");
+
+        // Assert
+        response.EnsureSuccessStatus();
+
+        string responseBody = await response.Content.ReadAsStringAsync();
+
+        responseBody.Should().Be(@"{
   ""data"": {
     ""type"": ""books"",
     ""id"": ""1"",
@@ -143,27 +143,27 @@ namespace Example.Tests.IntegrationTests
     }
   }
 }");
-        }
+    }
 
-        [Fact]
-        public async Task Can_get_book_author()
-        {
-            // Act
-            var response = await ExecuteGetRequestAsync("/api/books/1/author");
+    [Fact]
+    public async Task Can_get_book_author()
+    {
+        // Act
+        HttpResponseMessage response = await ExecuteGetRequestAsync("/api/books/1/author");
 
-            // Assert
-            response.EnsureSuccessStatus();
+        // Assert
+        response.EnsureSuccessStatus();
 
-            var responseBody = await response.Content.ReadAsStringAsync();
+        string responseBody = await response.Content.ReadAsStringAsync();
 
-            responseBody.Should().Be(@"{
+        responseBody.Should().Be(@"{
   ""data"": {
     ""type"": ""people"",
     ""id"": ""1"",
     ""attributes"": {
       ""first-name"": ""John"",
       ""last-name"": ""Doe"",
-      ""born-at"": ""1993-03-28T23:00:00+02:00""
+      ""born-at"": ""1993-03-29T00:00:00+00:00""
     },
     ""relationships"": {
       ""books"": {
@@ -175,39 +175,39 @@ namespace Example.Tests.IntegrationTests
     }
   }
 }");
-        }
+    }
 
-        [Fact]
-        public async Task Can_get_book_author_relationship()
-        {
-            // Act
-            var response = await ExecuteGetRequestAsync("/api/books/1/relationships/author");
+    [Fact]
+    public async Task Can_get_book_author_relationship()
+    {
+        // Act
+        HttpResponseMessage response = await ExecuteGetRequestAsync("/api/books/1/relationships/author");
 
-            // Assert
-            response.EnsureSuccessStatus();
+        // Assert
+        response.EnsureSuccessStatus();
 
-            var responseBody = await response.Content.ReadAsStringAsync();
+        string responseBody = await response.Content.ReadAsStringAsync();
 
-            responseBody.Should().Be(@"{
+        responseBody.Should().Be(@"{
   ""data"": {
     ""type"": ""people"",
     ""id"": ""1""
   }
 }");
-        }
+    }
 
-        [Fact]
-        public async Task Can_get_book_including_author()
-        {
-            // Act
-            var response = await ExecuteGetRequestAsync("/api/books/1?include=author");
+    [Fact]
+    public async Task Can_get_book_including_author()
+    {
+        // Act
+        HttpResponseMessage response = await ExecuteGetRequestAsync("/api/books/1?include=author");
 
-            // Assert
-            response.EnsureSuccessStatus();
+        // Assert
+        response.EnsureSuccessStatus();
 
-            var responseBody = await response.Content.ReadAsStringAsync();
+        string responseBody = await response.Content.ReadAsStringAsync();
 
-            responseBody.Should().Be(@"{
+        responseBody.Should().Be(@"{
   ""data"": {
     ""type"": ""books"",
     ""id"": ""1"",
@@ -235,7 +235,7 @@ namespace Example.Tests.IntegrationTests
       ""attributes"": {
         ""first-name"": ""John"",
         ""last-name"": ""Doe"",
-        ""born-at"": ""1993-03-28T23:00:00+02:00""
+        ""born-at"": ""1993-03-29T00:00:00+00:00""
       },
       ""relationships"": {
         ""books"": {
@@ -248,20 +248,20 @@ namespace Example.Tests.IntegrationTests
     }
   ]
 }");
-        }
+    }
 
-        [Fact]
-        public async Task Can_get_book_including_author_last_name()
-        {
-            // Act
-            var response = await ExecuteGetRequestAsync("/api/books/1?include=author&fields[people]=last-name");
+    [Fact]
+    public async Task Can_get_book_including_author_last_name()
+    {
+        // Act
+        HttpResponseMessage response = await ExecuteGetRequestAsync("/api/books/1?include=author&fields[people]=last-name");
 
-            // Assert
-            response.EnsureSuccessStatus();
+        // Assert
+        response.EnsureSuccessStatus();
 
-            var responseBody = await response.Content.ReadAsStringAsync();
+        string responseBody = await response.Content.ReadAsStringAsync();
 
-            responseBody.Should().Be(@"{
+        responseBody.Should().Be(@"{
   ""data"": {
     ""type"": ""books"",
     ""id"": ""1"",
@@ -292,20 +292,20 @@ namespace Example.Tests.IntegrationTests
     }
   ]
 }");
-        }
+    }
 
-        [Fact]
-        public async Task Can_get_book_title()
-        {
-            // Act
-            var response = await ExecuteGetRequestAsync("/api/books/1?fields[books]=title");
+    [Fact]
+    public async Task Can_get_book_title()
+    {
+        // Act
+        HttpResponseMessage response = await ExecuteGetRequestAsync("/api/books/1?fields[books]=title");
 
-            // Assert
-            response.EnsureSuccessStatus();
+        // Assert
+        response.EnsureSuccessStatus();
 
-            var responseBody = await response.Content.ReadAsStringAsync();
+        string responseBody = await response.Content.ReadAsStringAsync();
 
-            responseBody.Should().Be(@"{
+        responseBody.Should().Be(@"{
   ""data"": {
     ""type"": ""books"",
     ""id"": ""1"",
@@ -314,23 +314,23 @@ namespace Example.Tests.IntegrationTests
     }
   }
 }");
-        }
+    }
 
-        [Fact]
-        public async Task Cannot_get_missing_book()
-        {
-            // Act
-            var response = await ExecuteGetRequestAsync("/api/books/99999999");
+    [Fact]
+    public async Task Cannot_get_missing_book()
+    {
+        // Act
+        HttpResponseMessage response = await ExecuteGetRequestAsync("/api/books/99999999");
 
-            // Assert
-            response.StatusCode.Should().Be(404);
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
 
-            var responseBody = await response.Content.ReadAsStringAsync();
+        string responseBody = await response.Content.ReadAsStringAsync();
 
-            var responseDocument = JsonConvert.DeserializeObject<ErrorDocument>(responseBody);
-            var errorId = responseDocument.Errors[0].Id;
+        var responseDocument = JsonConvert.DeserializeObject<Document>(responseBody);
+        string? errorId = responseDocument?.Errors?[0].Id;
 
-            responseBody.Should().Be(@"{
+        responseBody.Should().Be(@"{
   ""errors"": [
     {
       ""id"": """ + errorId + @""",
@@ -340,6 +340,5 @@ namespace Example.Tests.IntegrationTests
     }
   ]
 }");
-        }
     }
 }
