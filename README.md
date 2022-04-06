@@ -8,7 +8,7 @@ By comparing the changes between branches in this repo, you can see how this exa
 
 ### Upgrade from v4 to v5
 
-The diff for the upgrade of example project [from v4.0.0 to v5.0.0](https://github.com/json-api-dotnet/MigrationGuide/compare/release/4.0.0...release/5.0.0) shows how to convert with minimal change in behavior. It includes tests that assert on the response json.
+The diff for the upgrade of example project [from v4.0.0 to v5.0.1](https://github.com/json-api-dotnet/MigrationGuide/compare/release/4.0.0...release/5.0.1) shows how to convert with minimal change in behavior. It includes tests that assert on the response json.
 
 This upgrade should be straightforward in most cases. Notable renames:
 
